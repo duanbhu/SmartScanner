@@ -1,13 +1,42 @@
 use_frameworks!
 
-platform :ios, '10.0'
+platform :ios, '12.0'
+
+def normalized_ios_deployment_target(value, fallback = '12.0')
+  return fallback if value.nil?
+
+  normalized = value.to_s.strip
+  normalized = normalized.sub(/\AiOS\s+/i, '')
+  return fallback unless /\A\d+(\.\d+)*\z/.match?(normalized)
+
+  Gem::Version.new(normalized) < Gem::Version.new(fallback) ? fallback : normalized
+end
 
 target 'SmartScanner_Example' do
-  pod 'SmartScanner', :path => '../'
+  pod 'SmartScanner/Google', :path => '../'
+  pod 'SmartScanner/Apple', :path => '../'
+
+#  pod 'GoogleMLKit/BarcodeScanning'
+#  pod 'GoogleMLKit/TextRecognition'
 
   target 'SmartScanner_Tests' do
     inherit! :search_paths
-
     
+    pod 'SwiftCheck', '~> 0.12'
+  end
+  
+  pre_install do |installer|
+    Pod::Installer::Xcode::TargetValidator.send(:define_method, :verify_no_static_framework_transitive_dependencies) {}
+  end
+
+  post_install do |installer|
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        next unless config.build_settings.key?('IPHONEOS_DEPLOYMENT_TARGET')
+
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] =
+          normalized_ios_deployment_target(config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'])
+      end
+    end
   end
 end

@@ -8,8 +8,9 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SmartScanner'
-  s.version          = '0.1.0'
-  s.summary          = 'A short description of SmartScanner.'
+  s.module_name      = 'SmartScanner'
+  s.version          = '1.0.0'
+  s.summary          = '相机采集视频流、谷歌MLKit识别手机号、条形码'
 
 # This description is used to generate tags and improve search results.
 #   * Think: What does it do? Why did you write it? What is the focus?
@@ -22,21 +23,51 @@ TODO: Add long description of the pod here.
                        DESC
 
   s.homepage         = 'https://github.com/duanbhu/SmartScanner'
-  # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'duanbhu' => '310701836@qq.com' }
   s.source           = { :git => 'https://github.com/duanbhu/SmartScanner.git', :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '12.0'
+  s.swift_version = '5.0'
+  s.static_framework = true
+  s.default_subspecs = 'Core', 'Google'
 
-  s.source_files = 'SmartScanner/Classes/**/*'
+  s.subspec 'Core' do |core|
+    core.source_files = 'SmartScanner/Classes/**/*'
+    core.resource_bundles = {
+      'SmartScanner' => [
+        'SmartScanner/Assets/Images.xcassets',
+        'SmartScanner/Assets/voice_scan.caf'
+      ]
+    }
+    core.exclude_files = [
+      'SmartScanner/Classes/Scanning/AppleEngine.swift',
+      'SmartScanner/Classes/Scanning/GoogleEngine.swift',
+      'SmartScanner/Classes/Scanning/GoogleEngineUpgrade.swift'
+    ]
+    core.public_header_files = 'SmartScanner/Classes/*.h'
+  end
+
+  s.subspec 'Apple' do |apple|
+    apple.dependency 'SmartScanner/Core'
+    apple.source_files = 'SmartScanner/Classes/Scanning/AppleEngine.swift'
+    apple.pod_target_xcconfig = {
+      'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) SMARTSCANNER_APPLE_ENGINE SWIFTYCAMERA_APPLE_ENGINE'
+    }
+  end
+
+  s.subspec 'Google' do |google|
+    google.dependency 'SmartScanner/Core'
+    google.source_files = [
+      'SmartScanner/Classes/Scanning/GoogleEngine.swift',
+      'SmartScanner/Classes/Scanning/GoogleEngineUpgrade.swift'
+    ]
+    google.dependency 'GoogleMLKit/BarcodeScanning'
+    google.dependency 'GoogleMLKit/TextRecognition'
+    google.dependency 'GoogleMLKit/TextRecognitionChinese'
+    google.pod_target_xcconfig = {
+      'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) SMARTSCANNER_GOOGLE_ENGINE SWIFTYCAMERA_GOOGLE_ENGINE'
+    }
+  end
   
-  # s.resource_bundles = {
-  #   'SmartScanner' => ['SmartScanner/Assets/*.png']
-  # }
-
-  # s.public_header_files = 'Pod/Classes/**/*.h'
-  # s.frameworks = 'UIKit', 'MapKit'
-  # s.dependency 'AFNetworking', '~> 2.3'
 end
