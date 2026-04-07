@@ -91,6 +91,24 @@ Example Objective-C import and usage:
 }];
 ```
 
+If you want an Objective-C equivalent of `CameraScannable`, use `SmartScannerObjcScanSession`:
+
+```objc
+#import <SmartScannerObjc/SmartScannerObjc-Swift.h>
+
+@property (nonatomic, strong) SmartScannerObjcScanSession *scanSession;
+
+self.scanSession =
+    [[SmartScannerObjcScanSession alloc] initWithPreview:self.previewView
+                                           detectOptions:[SmartScannerObjcDetectOptions virtualPhone]];
+self.scanSession.needAutoPhoto = NO;
+[self.scanSession setRegionRectInPreview:self.previewView.bounds];
+[self.scanSession setResultHandler:^(SmartScannerDetectResult *result) {
+  NSLog(@"phone: %@", [result phoneOrVirtual]);
+}];
+[self.scanSession start];
+```
+
 ## Author
 
 duanbhu, 310701836@qq.com

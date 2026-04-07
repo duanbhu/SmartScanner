@@ -9,6 +9,16 @@
 import UIKit
 fileprivate var CameraCapturerContext: UInt8 = 0
 
+func makeSmartScannerDefaultDetector(options: DetecteOptions) -> ImageDetector {
+#if SMARTSCANNER_GOOGLE_ENGINE || SWIFTYCAMERA_GOOGLE_ENGINE
+    return ImageDetector(options: options, engines: GoogleEngine(options: options))
+#elseif SMARTSCANNER_APPLE_ENGINE || SWIFTYCAMERA_APPLE_ENGINE
+    return ImageDetector(options: options, engines: AppleEngine(options: options))
+#else
+    fatalError("SmartScanner requires an engine subspec. Add `SmartScanner/Google` or `SmartScanner/Apple`.")
+#endif
+}
+
 public protocol CameraScannable {
     /// 预览  AVCaptureVideoPreviewLayer
     var preview: UIView { get }
@@ -46,16 +56,6 @@ public protocol CameraScanViewable: UIViewController, CameraScannable {
 }
 
 extension CameraScanViewable {
-    private func makeDefaultDetectorEngine(options: DetecteOptions) -> DetecteEngineProtocol {
-#if SMARTSCANNER_GOOGLE_ENGINE || SWIFTYCAMERA_GOOGLE_ENGINE
-        GoogleEngine(options: options)
-#elseif SMARTSCANNER_APPLE_ENGINE || SWIFTYCAMERA_APPLE_ENGINE
-        AppleEngine(options: options)
-#else
-        fatalError("SmartScanner requires an engine subspec. Add `SmartScanner/Google` or `SmartScanner/Apple`.")
-#endif
-    }
-
     public var scanView: CameraScanView {
         if let view = objc_getAssociatedObject(self, &CameraScanViewContext) as? CameraScanView {
             return view
@@ -80,7 +80,7 @@ extension CameraScanViewable {
     /// 默认工厂方法：优先保持 Google 引擎兼容，未集成时自动回落到 Apple 引擎
     public func makeDetector() -> ImageDetector {
         let options: DetecteOptions = []
-        return ImageDetector(options: options, engines: makeDefaultDetectorEngine(options: options))
+        return makeSmartScannerDefaultDetector(options: options)
     }
     
     /// 注入自定义识别器，未注入时保持默认引擎不变
