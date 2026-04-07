@@ -20,6 +20,77 @@ it, simply add the following line to your Podfile:
 pod 'SmartScanner'
 ```
 
+`SmartScanner` 默认集成 `Core + Google`。
+
+### Swift 按需集成
+
+只使用相机采集、扫描框 UI、资源和桥接能力，不接入识别引擎：
+
+```ruby
+pod 'SmartScanner/Core'
+```
+
+使用苹果原生识别引擎：
+
+```ruby
+pod 'SmartScanner/Apple'
+```
+
+使用 Google ML Kit 识别引擎：
+
+```ruby
+pod 'SmartScanner/Google'
+```
+
+Objective-C projects can use the Objective-C friendly pod entrypoint:
+
+```ruby
+pod 'SmartScannerObjc'
+```
+
+`SmartScannerObjc` 默认集成 `Core + Google`。
+
+### Objective-C 按需集成
+
+只使用相机采集桥接能力，不接入识别引擎：
+
+```ruby
+pod 'SmartScannerObjc/Core'
+```
+
+使用苹果原生识别引擎：
+
+```ruby
+pod 'SmartScannerObjc/Apple'
+```
+
+使用 Google ML Kit 识别引擎：
+
+```ruby
+pod 'SmartScannerObjc/Google'
+```
+
+### Subspec 说明
+
+- `Core`：包含相机采集、扫描框 UI、资源文件、Objective-C 桥接类，不包含文本/码识别引擎。
+- `Apple`：在 `Core` 基础上增加苹果原生识别引擎。
+- `Google`：在 `Core` 基础上增加 Google ML Kit 识别引擎。
+
+如果你要直接使用 `ScanItViewController` 或 `SmartScannerObjcBridge` 的扫描识别能力，请选择 `Apple` 或 `Google`，不要只集成 `Core`。
+
+Example Objective-C import and usage:
+
+```objc
+#import <SmartScannerObjc/SmartScannerObjc-Swift.h>
+
+[SmartScannerObjcBridge presentPhoneFrom:self
+                           detectOptions:[SmartScannerObjcDetectOptions virtualPhone]
+                           needAutoImage:NO
+                              completion:^(SmartScannerDetectResult *result) {
+  NSLog(@"phone: %@", [result phoneOrVirtual]);
+}];
+```
+
 ## Author
 
 duanbhu, 310701836@qq.com
