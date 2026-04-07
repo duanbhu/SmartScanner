@@ -81,7 +81,7 @@ pod 'SmartScannerObjc/Google'
 Example Objective-C import and usage:
 
 ```objc
-#import <SmartScannerObjc/SmartScannerObjc-Swift.h>
+#import <SmartScannerObjc/SmartScannerObjc.h>
 
 [SmartScannerObjcBridge presentPhoneFrom:self
                            detectOptions:[SmartScannerObjcDetectOptions virtualPhone]
@@ -94,7 +94,7 @@ Example Objective-C import and usage:
 If you want an Objective-C equivalent of `CameraScannable`, use `SmartScannerObjcScanSession`:
 
 ```objc
-#import <SmartScannerObjc/SmartScannerObjc-Swift.h>
+#import <SmartScannerObjc/SmartScannerObjc.h>
 
 @property (nonatomic, strong) SmartScannerObjcScanSession *scanSession;
 
