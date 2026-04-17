@@ -42,6 +42,13 @@ pod 'SmartScanner/Apple'
 pod 'SmartScanner/Google'
 ```
 
+使用 Paddle 识别引擎（需同时声明 Paddle SDK 源）：
+
+```ruby
+pod 'DHPaddleLiteSDK', :git => 'https://github.com/duanbhu/DHPaddleLiteSDK.git', :branch => 'main'
+pod 'SmartScanner/Paddle'
+```
+
 Objective-C projects can use the Objective-C friendly pod entrypoint:
 
 ```ruby
@@ -70,13 +77,21 @@ pod 'SmartScannerObjc/Apple'
 pod 'SmartScannerObjc/Google'
 ```
 
+使用 Paddle 识别引擎（需同时声明 Paddle SDK 源）：
+
+```ruby
+pod 'DHPaddleLiteSDK', :git => 'https://github.com/duanbhu/DHPaddleLiteSDK.git', :branch => 'main'
+pod 'SmartScannerObjc/Paddle'
+```
+
 ### Subspec 说明
 
 - `Core`：包含相机采集、扫描框 UI、资源文件、Objective-C 桥接类，不包含文本/码识别引擎。
 - `Apple`：在 `Core` 基础上增加苹果原生识别引擎。
 - `Google`：在 `Core` 基础上增加 Google ML Kit 识别引擎。
+- `Paddle`：在 `Core` 基础上增加 Paddle 识别引擎（依赖 `DHPaddleLiteSDK`）。
 
-如果你要直接使用 `ScanItViewController` 或 `SmartScannerObjcBridge` 的扫描识别能力，请选择 `Apple` 或 `Google`，不要只集成 `Core`。
+如果你要直接使用 `ScanItViewController` 或 `SmartScannerObjcBridge` 的扫描识别能力，请选择 `Apple`、`Google` 或 `Paddle`，不要只集成 `Core`。
 
 Example Objective-C import and usage:
 

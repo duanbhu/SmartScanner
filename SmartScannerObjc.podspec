@@ -31,7 +31,8 @@ compatible bridge APIs.
     core.exclude_files = [
       'SmartScanner/Classes/Scanning/AppleEngine.swift',
       'SmartScanner/Classes/Scanning/GoogleEngine.swift',
-      'SmartScanner/Classes/Scanning/GoogleEngineUpgrade.swift'
+      'SmartScanner/Classes/Scanning/GoogleEngineUpgrade.swift',
+      'SmartScanner/Classes/Scanning/PaddleEngine.swift'
     ]
     core.public_header_files = 'SmartScanner/Classes/*.h'
   end
@@ -55,6 +56,15 @@ compatible bridge APIs.
     google.dependency 'GoogleMLKit/TextRecognitionChinese'
     google.pod_target_xcconfig = {
       'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) SMARTSCANNER_GOOGLE_ENGINE SWIFTYCAMERA_GOOGLE_ENGINE'
+    }
+  end
+
+  s.subspec 'Paddle' do |paddle|
+    paddle.dependency 'SmartScannerObjc/Core'
+    paddle.dependency 'DHPaddleLiteSDK'
+    paddle.source_files = 'SmartScanner/Classes/Scanning/PaddleEngine.swift'
+    paddle.pod_target_xcconfig = {
+      'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '$(inherited) SMARTSCANNER_PADDLE_ENGINE SWIFTYCAMERA_PADDLE_ENGINE'
     }
   end
 end

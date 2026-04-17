@@ -60,9 +60,20 @@ class PhoneExtractor {
     private func correctOCRErrors(_ text: String) -> String {
         var corrected = text
         
+        // 常见 OCR 变体统一成“转”（分机号连接词）
+        corrected = corrected.replacingOccurrences(of: "车专", with: "转")
+        corrected = corrected.replacingOccurrences(of: "车转", with: "转")
+        corrected = corrected.replacingOccurrences(of: "专", with: "转")
+        corrected = corrected.replacingOccurrences(of: "$", with: "转")
+        
         // O -> 0
         corrected = corrected.replacingOccurrences(of: "O", with: "0")
         corrected = corrected.replacingOccurrences(of: "o", with: "0")
+        
+        // B -> 8（仅在数字上下文中）
+        if corrected.contains(where: { $0.isNumber }) {
+            corrected = corrected.replacingOccurrences(of: "B", with: "8")
+        }
         
         // l -> 1 (仅在数字上下文中)
         corrected = corrected.replacingOccurrences(of: "l", with: "1")

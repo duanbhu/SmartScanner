@@ -12,12 +12,12 @@ import UIKit
 public final class SmartScannerObjcBridge: NSObject {
     @objc(presentFrom:scanType:detectOptions:needAutoImage:completion:)
     public static func present(from viewController: UIViewController?,
-                               scanType: SmartScannerObjcScanType,
+                               scanType: Int,
                                detectOptions: Int,
                                needAutoImage: Bool,
                                completion: @escaping (DetectResult) -> Void) {
         present(from: viewController,
-                scanTypeRawValue: scanType.rawValue,
+                scanTypeRawValue: scanType,
                 detectOptionsRawValue: detectOptions,
                 needAutoImage: needAutoImage,
                 completion: completion)
@@ -43,7 +43,7 @@ public final class SmartScannerObjcBridge: NSObject {
                                       needAutoImage: Bool,
                                       completion: @escaping (DetectResult) -> Void) {
         present(from: viewController,
-                scanType: .barcode,
+                scanType: 0,
                 detectOptions: SmartScannerObjcDetectOptions.barcode(),
                 needAutoImage: needAutoImage,
                 completion: completion)
@@ -54,7 +54,7 @@ public final class SmartScannerObjcBridge: NSObject {
                                      needAutoImage: Bool,
                                      completion: @escaping (DetectResult) -> Void) {
         present(from: viewController,
-                scanType: .qrcode,
+                scanType: 1,
                 detectOptions: SmartScannerObjcDetectOptions.qrcode(),
                 needAutoImage: needAutoImage,
                 completion: completion)
@@ -65,7 +65,7 @@ public final class SmartScannerObjcBridge: NSObject {
                                       needAutoImage: Bool,
                                       completion: @escaping (DetectResult) -> Void) {
         present(from: viewController,
-                scanType: .allcode,
+                scanType: 2,
                 detectOptions: SmartScannerObjcDetectOptions.allcode(),
                 needAutoImage: needAutoImage,
                 completion: completion)
@@ -77,7 +77,7 @@ public final class SmartScannerObjcBridge: NSObject {
                                     needAutoImage: Bool,
                                     completion: @escaping (DetectResult) -> Void) {
         present(from: viewController,
-                scanType: .phone,
+                scanType: 3,
                 detectOptions: detectOptions,
                 needAutoImage: needAutoImage,
                 completion: completion)

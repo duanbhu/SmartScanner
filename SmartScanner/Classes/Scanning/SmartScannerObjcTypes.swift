@@ -7,14 +7,6 @@
 
 import Foundation
 
-@objc(SmartScannerObjcScanType)
-public enum SmartScannerObjcScanType: Int {
-    case barcode = 0
-    case qrcode = 1
-    case allcode = 2
-    case phone = 3
-}
-
 @objc(SmartScannerObjcDetectOptions)
 @objcMembers
 public final class SmartScannerObjcDetectOptions: NSObject {

@@ -23,7 +23,7 @@ public class GoogleEngine: NSObject, DetecteEngineProtocol {
         self.response = response
     }
     
-    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: (UIImage?) -> ()) {
+    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: @escaping (UIImage?) -> ()) {
     }
     
     public func reset(detecteOptions: DetecteOptions) {
@@ -59,7 +59,7 @@ public class GoogleEngine: NSObject, DetecteEngineProtocol {
         self.response = response
     }
     
-    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: (UIImage?) -> ()) {
+    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: @escaping (UIImage?) -> ()) {
         var visionImage = VisionImage(buffer: sampleBuffer)
         recognizeBarcode(in: visionImage)
         var cropImage: UIImage? = nil

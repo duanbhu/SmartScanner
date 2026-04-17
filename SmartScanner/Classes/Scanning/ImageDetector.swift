@@ -18,7 +18,7 @@ public protocol DetecteEngineProtocol {
     ///   - regionRect: 识别区域-- 仅针对文本， 条码、二维码为全屏扫
     ///   - response: 识别结果
     ///   - handle: 识别后处理回调
-    func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: Handler)
+    func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: @escaping Handler)
     
     func response(_ response: inout RecognitionResponse)
     

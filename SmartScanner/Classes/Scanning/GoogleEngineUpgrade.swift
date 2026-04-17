@@ -23,7 +23,7 @@ public class GoogleEngineUpgrade: NSObject, DetecteEngineProtocol {
         self.response = response
     }
     
-    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: (UIImage?) -> ()) {
+    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: @escaping (UIImage?) -> ()) {
     }
     
     public func reset(detecteOptions: DetecteOptions) {
@@ -114,7 +114,7 @@ public class GoogleEngineUpgrade: NSObject, DetecteEngineProtocol {
         self.preprocessOptions = options
     }
     
-    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: (UIImage?) -> ()) {
+    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: @escaping (UIImage?) -> ()) {
         guard CMSampleBufferIsValid(sampleBuffer),
               CMSampleBufferDataIsReady(sampleBuffer) else {
             DetectorConfig.logPrint("Invalid or not ready sample buffer")

@@ -74,7 +74,7 @@ public class AppleEngine: NSObject, DetecteEngineProtocol {
         self.preprocessOptions = options
     }
     
-    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: Handler) {
+    public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: @escaping Handler) {
         guard CMSampleBufferIsValid(sampleBuffer),
               CMSampleBufferDataIsReady(sampleBuffer) else {
             DetectorConfig.logPrint("AppleEngine: invalid or not ready sample buffer")
