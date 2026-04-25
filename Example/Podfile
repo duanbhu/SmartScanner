@@ -1,3 +1,4 @@
+source 'https://github.com/CocoaPods/Specs.git'
 use_frameworks!
 
 platform :ios, '12.0'
@@ -15,6 +16,11 @@ end
 target 'SmartScanner_Example' do
   pod 'SmartScanner/Google', :path => '../'
   pod 'SmartScanner/Apple', :path => '../'
+  # Paddle engine example:
+  pod 'PaddleLiteiOS', :git => 'https://github.com/duanbhu/PaddleLiteiOS.git', :tag => '0.0.5'
+  pod 'DHPaddleLiteSDK/OCRModelV4', :git => 'https://github.com/duanbhu/DHPaddleLiteSDK.git'
+
+  pod 'SmartScanner/Paddle', :path => '../'
 
 #  pod 'GoogleMLKit/BarcodeScanning'
 #  pod 'GoogleMLKit/TextRecognition'

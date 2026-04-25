@@ -56,7 +56,10 @@ public final class PaddleEngine: NSObject, DetecteEngineProtocol {
     private let minimumRealtimeRecognitionInterval: CFTimeInterval = 0.14
     
     /// 候选文本上限，避免多行组合过多导致后处理耗时上升。
-    private let maxExtractionCandidates = 12
+    private let maxExtractionCandidates = 4
+    /// 高置信度直接命中阈值：满足时走 direct-hit，不依赖计数阈值。
+    private let directHitConfidenceThreshold: CGFloat = 0.95
+    
     
     /// 统一号码提取器：从 OCR 文本中提取普通号/虚拟号/隐私号。
     private lazy var phoneExtractor: PhoneExtractor = {
@@ -64,6 +67,16 @@ public final class PaddleEngine: NSObject, DetecteEngineProtocol {
         return PhoneExtractor(
             prefixFilter: filter,
             enableLogging: DetectorConfig.shared.logEnabled,
+            enableNewlineHandling: true
+        )
+    }()
+    
+    /// 用于证据校验，避免重复打印提取日志。
+    private lazy var silentPhoneExtractor: PhoneExtractor = {
+        let filter = PrefixFilter(customPrefixes: [])
+        return PhoneExtractor(
+            prefixFilter: filter,
+            enableLogging: false,
             enableNewlineHandling: true
         )
     }()
@@ -110,9 +123,13 @@ public final class PaddleEngine: NSObject, DetecteEngineProtocol {
             return
         }
         
-        recognizePhones(in: sourceImage) { [weak self] result in
+        recognizePhones(in: sourceImage) { [weak self] result, maxConfidence, hasDirectLineEvidence in
             guard let self else { return }
             self.append(extracted: result)
+            self.setHighConfidenceDirectResultIfNeeded(extracted: result,
+                                                       maxConfidence: maxConfidence,
+                                                       hasDirectLineEvidence: hasDirectLineEvidence,
+                                                       cropImage: cropImage)
             handle(cropImage)
         }
     }
@@ -129,7 +146,7 @@ public final class PaddleEngine: NSObject, DetecteEngineProtocol {
         let lock = DispatchQueue(label: "com.swiftycamera.paddle-engine.image-result")
         var extracted = ExtractionResult()
         
-        recognizePhones(in: image) { result in
+        recognizePhones(in: image) { result, _, _ in
             lock.sync {
                 extracted = result
             }
@@ -176,20 +193,24 @@ private extension PaddleEngine {
         return ImageUtilities.cropImageFromSampleBuffer(sampleBuffer: sampleBuffer, cropRect: rect)
     }
     
-    func recognizePhones(in image: UIImage, completion: @escaping (ExtractionResult) -> Void) {
+    func recognizePhones(in image: UIImage, completion: @escaping (ExtractionResult, CGFloat, Bool) -> Void) {
 #if canImport(DHPaddleLiteSDK)
         let recognizer = DHPaddleLiteTextRecognition.sharedInstance()
         recognizer.recognizeImage(image, effectiveArea: .zero) { [weak self] results, error in
             guard let self else { return }
             guard error == nil, let results, !results.isEmpty else {
-                completion(ExtractionResult())
+                completion(ExtractionResult(), 0, false)
                 return
             }
             
             for item in results {
                 debugPrint("*** OCR item index=\(item.index) confidence=\(item.confidence) text=\(item.text)")
             }
-            
+            let maxConfidence = results.map(\.confidence).max() ?? 0
+            let lines = results
+                .sorted { $0.index < $1.index }
+                .map { $0.text.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
             var merged = ExtractionResult()
             let candidates = self.extractionCandidates(from: results)
             let hasVirtualHints = candidates.contains { self.containsVirtualHint($0) }
@@ -204,15 +225,17 @@ private extension PaddleEngine {
                     break
                 }
             }
-            completion(self.removeVirtualBaseNumbers(from: merged))
+            let final = self.removeVirtualBaseNumbers(from: merged)
+            let hasDirectLineEvidence = self.hasSingleLineDirectEvidence(lines: lines, extracted: final)
+            completion(final, maxConfidence, hasDirectLineEvidence)
         }
 #else
-        completion(ExtractionResult())
+        completion(ExtractionResult(), 0, false)
 #endif
     }
 
 #if canImport(DHPaddleLiteSDK)
-    /// 生成提取候选：单行 + 有条件合并的多行（2/3行）
+    /// 生成提取候选：单行 + 有条件合并的两行
     /// 例如：
     /// "手机：" + "191-2384-7" + "967" => "手机：191-2384-7967"
     func extractionCandidates(from results: [DLTextRecognitionResult]) -> [String] {
@@ -241,40 +264,12 @@ private extension PaddleEngine {
             }
         }
         
-        // 2) 有选择地合并 2/3 行，提升跨行号码命中率
+        // 2) 有选择地合并 2 行，提升跨行号码命中率
         for i in 0..<lines.count {
             if i + 1 < lines.count {
                 let pair = [lines[i], lines[i + 1]]
                 if shouldMergePhoneLines(pair) {
                     appendIfNeeded(pair.joined())
-                    if output.count >= maxExtractionCandidates {
-                        return output
-                    }
-                }
-            }
-            
-            if i + 2 < lines.count {
-                let triple = [lines[i], lines[i + 1], lines[i + 2]]
-                if shouldMergePhoneLines(triple) {
-                    appendIfNeeded(triple.joined())
-                    if output.count >= maxExtractionCandidates {
-                        return output
-                    }
-                }
-            }
-            
-            // 3) 4 行定向合并：手机号分两行 + “转/专”单行 + 分机单行
-            // 例如：
-            // "备用号码：1301922" + "9964" + "转" + "8851"
-            if i + 3 < lines.count {
-                let quad = [lines[i], lines[i + 1], lines[i + 2], lines[i + 3]]
-                if let normalized = normalizeFourLinePhonePattern(quad) {
-                    appendIfNeeded(normalized)
-                    if output.count >= maxExtractionCandidates {
-                        return output
-                    }
-                } else if shouldMergePhoneLines(quad) {
-                    appendIfNeeded(quad.joined())
                     if output.count >= maxExtractionCandidates {
                         return output
                     }
@@ -320,46 +315,6 @@ private extension PaddleEngine {
         let separators = ["-", "转", "专", "车转", "车专", "#", "*", "$", "ext", "分机", ":"]
         if text.contains(where: \.isNumber) { return true }
         return separators.contains { text.lowercased().contains($0.lowercased()) }
-    }
-    
-    /// 针对 4 行拆分样式做归一化合并，命中后输出 "手机号转分机号"
-    /// 输入示例：
-    /// ["备用号码：1301922", "9964", "转", "8851"] -> "13019229964转8851"
-    func normalizeFourLinePhonePattern(_ lines: [String]) -> String? {
-        guard lines.count == 4 else { return nil }
-        
-        let l1 = lines[0]
-        let l2 = lines[1]
-        let l3 = lines[2]
-        let l4 = lines[3]
-        
-        let digits1 = l1.filter(\.isNumber)
-        let digits2 = l2.filter(\.isNumber)
-        let digits4 = l4.filter(\.isNumber)
-        
-        let line3HasTransferToken = ["转", "专", "车转", "车专", "$", "#", "ext", "分机"]
-            .contains { l3.lowercased().contains($0.lowercased()) }
-        
-        // 典型条件：
-        // 1) 前两行拼起来正好 11 位手机号
-        // 2) 第三行为“转/专”等分隔语义
-        // 3) 第三、四行累计得到 3~4 位分机
-        let extensionDigits = (l3 + l4).filter(\.isNumber)
-        guard digits1.count + digits2.count == 11,
-              line3HasTransferToken,
-              (3...4).contains(extensionDigits.count) else {
-            return nil
-        }
-        
-        let phone = digits1 + digits2
-        guard phone.count == 11,
-              phone.hasPrefix("1"),
-              let second = phone.dropFirst().first,
-              ("3"..."9").contains(second) else {
-            return nil
-        }
-        
-        return "\(phone)转\(extensionDigits)"
     }
     
     func shouldStopEarly(with result: ExtractionResult, hasVirtualHints: Bool) -> Bool {
@@ -412,6 +367,61 @@ private extension PaddleEngine {
         return result
     }
 #endif
+    
+    func setHighConfidenceDirectResultIfNeeded(extracted: ExtractionResult,
+                                               maxConfidence: CGFloat,
+                                               hasDirectLineEvidence: Bool,
+                                               cropImage: UIImage?) {
+        guard maxConfidence >= directHitConfidenceThreshold else { return }
+        // 仅允许“单行直接可提取”的结果走直出，避免多行短片段拼接误判。
+        guard hasDirectLineEvidence else { return }
+        
+        let direct = DetectResult()
+        direct.cropImage = cropImage
+        
+        if options == .phoneNumber, let phone = extracted.normalPhones.first {
+            direct.phone = phone
+        } else if options == .privacyNumber, let privacy = extracted.privacyPhones.first {
+            direct.privacyNumber = privacy
+        } else if options == .virtualNumber, let virtual = extracted.virtualPhones.first {
+            direct.virtualNumber = virtual
+        } else if options == .virtualPhone {
+            // 避免虚拟号场景再次误退化到普通号，direct-hit 仅接受虚拟号。
+            if let virtual = extracted.virtualPhones.first {
+                direct.virtualNumber = virtual
+            } else {
+                return
+            }
+        } else if options.contains(.virtualNumber), let virtual = extracted.virtualPhones.first {
+            direct.virtualNumber = virtual
+        } else if options.contains(.phoneNumber), let phone = extracted.normalPhones.first {
+            direct.phone = phone
+        } else if options.contains(.privacyNumber), let privacy = extracted.privacyPhones.first {
+            direct.privacyNumber = privacy
+        } else {
+            return
+        }
+        
+        response?.highConfidenceDirectResult = direct
+    }
+    
+    func hasSingleLineDirectEvidence(lines: [String], extracted: ExtractionResult) -> Bool {
+        guard !lines.isEmpty else { return false }
+        guard !extracted.normalPhones.isEmpty || !extracted.virtualPhones.isEmpty || !extracted.privacyPhones.isEmpty else {
+            return false
+        }
+        
+        for line in lines {
+            let lineResult = silentPhoneExtractor.extractPhones(from: line)
+            let hasVirtual = !lineResult.virtualPhones.isDisjoint(with: extracted.virtualPhones)
+            let hasNormal = !lineResult.normalPhones.isDisjoint(with: extracted.normalPhones)
+            let hasPrivacy = !lineResult.privacyPhones.isDisjoint(with: extracted.privacyPhones)
+            if hasVirtual || hasNormal || hasPrivacy {
+                return true
+            }
+        }
+        return false
+    }
     
     func append(extracted: ExtractionResult) {
         if options.contains(.virtualNumber) {

@@ -123,6 +123,7 @@ public class ImageDetector: NSObject {
     }
     
     private func handle(_ image: UIImage?) {
+        highConfidenceDirectHandle(image)
         handleOfSecretSheet(image)
         onlyBarcodeHandle()
         virtualPhoneHandle()
@@ -156,6 +157,27 @@ public class ImageDetector: NSObject {
 }
 
 extension ImageDetector {
+    private func highConfidenceDirectHandle(_ image: UIImage?) {
+        guard let direct = response.highConfidenceDirectResult else { return }
+        
+        if detecteOptions == .phoneNumber, let phone = direct.phone {
+            stop(of: .init(phone: phone, cropImage: direct.cropImage ?? image))
+            return
+        }
+        if detecteOptions == .privacyNumber, let privacy = direct.privacyNumber {
+            stop(of: .init(privacyNumber: privacy, cropImage: direct.cropImage ?? image))
+            return
+        }
+        if detecteOptions == .virtualNumber, let virtual = direct.virtualNumber {
+            stop(of: .init(virtualNumber: virtual, cropImage: direct.cropImage ?? image))
+            return
+        }
+        if detecteOptions == .virtualPhone, let virtual = direct.virtualNumber {
+            stop(of: .init(virtualNumber: virtual, cropImage: direct.cropImage ?? image))
+            return
+        }
+    }
+    
     /// 隐私面单  - 识别单号+手机号/隐私号
     private func handleOfSecretSheet(_ image: UIImage?) {
         guard detecteOptions == .secretSheet else { return }

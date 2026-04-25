@@ -24,6 +24,9 @@ public class RecognitionResponse {
     /// 虚拟号码
     let virtualCountedSet = NSCountedSet()
     
+    /// 高置信度直接命中候选（由引擎写入，Detector 优先消费）。
+    var highConfidenceDirectResult: DetectResult?
+    
     var barLastTime: Double = 0
     
     var qrLastTime: Double = 0
@@ -32,6 +35,7 @@ public class RecognitionResponse {
         [barCountedSet, phoneCountedSet, virtualCountedSet, privacyCountedSet, qrCountedSet].forEach {
             $0.removeAllObjects()
         }
+        highConfidenceDirectResult = nil
     }
     
     func addBarcode(_ code: String) {

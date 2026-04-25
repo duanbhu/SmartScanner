@@ -34,9 +34,9 @@ class ViewController: UIViewController, CameraScanViewable {
         return label
     }()
     
-    private lazy var pilotDetector: ImageDetectorUpgrade = {
+    private lazy var pilotDetector: ImageDetector = {
         let options: DetecteOptions = .virtualPhone
-        return ImageDetectorUpgrade(options: options, engines: AppleEngine(options: options))
+        return ImageDetector(options: options, engines: PaddleEngine(options: options))
     }()
     
     private var pendingAutoResetWorkItem: DispatchWorkItem?
