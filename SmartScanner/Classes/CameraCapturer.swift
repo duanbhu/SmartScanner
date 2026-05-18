@@ -45,12 +45,6 @@ public protocol SmartScannerLoggerProtocol: AnyObject {
     func logType(_ type: SmartScannerLogType, message: String)
 }
 
-@available(*, deprecated, renamed: "SmartScannerLogType")
-public typealias SwiftyCameraLogType = SmartScannerLogType
-
-@available(*, deprecated, renamed: "SmartScannerLoggerProtocol")
-public typealias SwiftyCameraLoggerProtocol = SmartScannerLoggerProtocol
-
 @objc(SmartScannerCameraCapturer)
 public final class CameraCapturer: NSObject {
     

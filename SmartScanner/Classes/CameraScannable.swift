@@ -10,11 +10,11 @@ import UIKit
 fileprivate var CameraCapturerContext: UInt8 = 0
 
 func makeSmartScannerDefaultDetector(options: DetecteOptions) -> ImageDetector {
-#if SMARTSCANNER_GOOGLE_ENGINE || SWIFTYCAMERA_GOOGLE_ENGINE
+#if SMARTSCANNER_GOOGLE_ENGINE
     return ImageDetector(options: options, engines: GoogleEngine(options: options))
-#elseif SMARTSCANNER_PADDLE_ENGINE || SWIFTYCAMERA_PADDLE_ENGINE
+#elseif SMARTSCANNER_PADDLE_ENGINE
 //    return ImageDetector(options: options, engines: PaddleEngine(options: options))
-#elseif SMARTSCANNER_APPLE_ENGINE || SWIFTYCAMERA_APPLE_ENGINE
+#elseif SMARTSCANNER_APPLE_ENGINE
     return ImageDetector(options: options, engines: AppleEngine(options: options))
 #else
     fatalError("SmartScanner requires an engine subspec. Add `SmartScanner/Google`, `SmartScanner/Paddle`, or `SmartScanner/Apple`.")
