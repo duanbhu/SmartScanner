@@ -1,6 +1,6 @@
 //
 //  PhoneExtractor.swift
-//  SwiftyCamera
+//  SmartScanner
 //
 //  Created for phone number extraction optimization
 //

@@ -1,6 +1,6 @@
 //
-//  SwiftyCameraObjcCapturerBridge.swift
-//  SwiftyCamera
+//  SmartScannerObjcCapturerBridge.swift
+//  SmartScanner
 //
 //  Created by Codex on 2026/4/3.
 //

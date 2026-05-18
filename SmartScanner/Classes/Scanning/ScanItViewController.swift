@@ -1,6 +1,6 @@
 //
 //  ScanItViewController.swift
-//  SwiftyCamera
+//  SmartScanner
 //
 //  Created by Duanhu on 2024/7/19.
 //

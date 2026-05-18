@@ -1,6 +1,6 @@
 //
 //  ImagePreprocessor.swift
-//  SwiftyCamera
+//  SmartScanner
 //
 //  Created for OCR image preprocessing
 //

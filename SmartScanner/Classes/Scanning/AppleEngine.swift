@@ -1,6 +1,6 @@
 //
 //  AppleEngine.swift
-//  SwiftyCamera
+//  SmartScanner
 //
 //  Created by Codex on 2026/3/27.
 //

@@ -1,6 +1,6 @@
 //
 //  PhoneNumber.swift
-//  SwiftyCamera
+//  SmartScanner
 //
 //  Created by Kiro
 //

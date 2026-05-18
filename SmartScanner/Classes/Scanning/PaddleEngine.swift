@@ -51,7 +51,7 @@ public final class PaddleEngine: NSObject, DetecteEngineProtocol {
     private var response: RecognitionResponse?
     
     /// 实时流识别状态，控制 OCR 触发频率，避免每帧都跑模型。
-    private let stateQueue = DispatchQueue(label: "com.swiftycamera.paddle-engine.state")
+    private let stateQueue = DispatchQueue(label: "com.smartscanner.paddle-engine.state")
     private var lastRealtimeRecognitionTime: CFAbsoluteTime = 0
     private let minimumRealtimeRecognitionInterval: CFTimeInterval = 0.14
     
@@ -143,7 +143,7 @@ public final class PaddleEngine: NSObject, DetecteEngineProtocol {
         
         // 图片识别接口同样是同步 completion，保持与其它引擎行为一致。
         let semaphore = DispatchSemaphore(value: 0)
-        let lock = DispatchQueue(label: "com.swiftycamera.paddle-engine.image-result")
+        let lock = DispatchQueue(label: "com.smartscanner.paddle-engine.image-result")
         var extracted = ExtractionResult()
         
         recognizePhones(in: image) { result, _, _ in

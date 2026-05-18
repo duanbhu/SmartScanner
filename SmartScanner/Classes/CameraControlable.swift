@@ -1,6 +1,6 @@
 //
 //  CameraControlable.swift
-//  SwiftyCamera_Example
+//  SmartScanner_Example
 //
 //  Created by Duanhu on 2024/7/11.
 //  Copyright © 2024 CocoaPods. All rights reserved.

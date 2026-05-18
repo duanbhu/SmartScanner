@@ -1,6 +1,6 @@
 //
 //  ImageDetectorUpgrade.swift
-//  SwiftyCamera
+//  SmartScanner
 //
 //  Created by Codex on 2026/3/28.
 //
@@ -14,7 +14,7 @@ public class ImageDetectorUpgrade: NSObject {
     
     public typealias CompletionHandler = (DetectResult) -> ()
     
-    private let stateQueue = DispatchQueue(label: "com.swiftycamera.image-detector-upgrade")
+    private let stateQueue = DispatchQueue(label: "com.smartscanner.image-detector-upgrade")
     
     var detecteOptions: DetecteOptions
     
@@ -49,7 +49,7 @@ public class ImageDetectorUpgrade: NSObject {
         
         DispatchQueue.global(qos: .userInitiated).async {
             let group = DispatchGroup()
-            let callbackQueue = DispatchQueue(label: "com.swiftycamera.image-detector-upgrade.image-recognize")
+            let callbackQueue = DispatchQueue(label: "com.smartscanner.image-detector-upgrade.image-recognize")
             var didComplete = false
             
             for engine in engines {
