@@ -312,7 +312,7 @@ private extension PaddleEngine {
     }
     
     func isLikelyPhoneFragment(_ text: String) -> Bool {
-        let separators = ["-", "转", "专", "车转", "车专", "#", "*", "$", "ext", "分机", ":"]
+        let separators = ["-", "转", "专", "车转", "车专", "#", "*", "$", "ext", "分机", ":", "：", "/", "／", "|", "｜", ".", "。", "·", "•", "~", "〜", "_"]
         if text.contains(where: \.isNumber) { return true }
         return separators.contains { text.lowercased().contains($0.lowercased()) }
     }
@@ -347,7 +347,7 @@ private extension PaddleEngine {
     
     func containsVirtualHint(_ text: String) -> Bool {
         let lower = text.lowercased()
-        let hints = ["转", "专", "车转", "车专", "#", "*", "$", "_", "ext", "分机", ",", "，", ";", "；"]
+        let hints = ["转", "专", "车转", "车专", "#", "*", "$", "_", "ext", "分机", ",", "，", ";", "；", ".", "。", ":", "：", "/", "／", "|", "｜", "·", "•", "~", "〜"]
         return hints.contains { lower.contains($0) }
     }
     
