@@ -100,6 +100,15 @@ public final class CameraCapturer: NSObject {
     
     private var timer: Timer?
     
+    /// 会话通知观察者，deinit 时统一释放
+    private var notificationObservers: [NSObjectProtocol] = []
+    
+    /// 记录当前页面是否期望会话处于运行状态（用于中断恢复）
+    private var shouldKeepSessionRunning = false
+    
+    /// 防止多处并发触发 startRunning 导致状态竞争。
+    private var isStartingSession = false
+    
     public weak var logger: SmartScannerLoggerProtocol?
     
     @objc static func capturer(preview: UIView) -> CameraCapturer? {
@@ -120,6 +129,7 @@ public final class CameraCapturer: NSObject {
             onError?(.inputDevice)
             return nil
         }
+        var didLockDevice = false
         
         captureSession.beginConfiguration()
 
@@ -128,7 +138,9 @@ public final class CameraCapturer: NSObject {
         videoDataOutput.alwaysDiscardsLateVideoFrames = true
 
         defer {
-            device.unlockForConfiguration()
+            if didLockDevice {
+                device.unlockForConfiguration()
+            }
             captureSession.commitConfiguration()
         }
         
@@ -148,6 +160,7 @@ public final class CameraCapturer: NSObject {
         
         do {
             try device.lockForConfiguration()
+            didLockDevice = true
         } catch {
             onError?(.inputDevice)
             return
@@ -173,6 +186,8 @@ public final class CameraCapturer: NSObject {
         videoPreviewLayer.videoGravity = .resizeAspectFill
         videoPreviewLayer.frame = preview.bounds
         preview.layer.insertSublayer(videoPreviewLayer, at: 0)
+        
+        setupSessionObservers()
     }
     
     private func configureDevice(captureDevice: AVCaptureDevice, mediaType: AVMediaType) {
@@ -212,6 +227,7 @@ public final class CameraCapturer: NSObject {
 
     /// Starts the camera and detecting quadrilaterals.
     @objc public func start() {
+        shouldKeepSessionRunning = true
         // 禁止长时间不操作，锁屏
         UIApplication.shared.isIdleTimerDisabled = true
         let authorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
@@ -233,11 +249,22 @@ public final class CameraCapturer: NSObject {
     
     // MARK: - Private Methods
     private func startCaptureSession() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.captureSession.startRunning()
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            guard !self.isStartingSession else { return }
+            guard !self.captureSession.isRunning else {
+                DispatchQueue.main.async {
+                    self.setupCollectionTimer()
+                    self.onSuccess?()
+                }
+                return
+            }
+            self.isStartingSession = true
+            self.captureSession.startRunning()
+            self.isStartingSession = false
             DispatchQueue.main.async {
-                self?.setupCollectionTimer()
-                self?.onSuccess?()
+                self.setupCollectionTimer()
+                self.onSuccess?()
             }
         }
     }
@@ -274,7 +301,10 @@ public final class CameraCapturer: NSObject {
     }
 
     @objc public func stop() {
-        captureSession.stopRunning()
+        shouldKeepSessionRunning = false
+        sessionQueue.async { [weak self] in
+            self?.captureSession.stopRunning()
+        }
         UIApplication.shared.isIdleTimerDisabled = false
         stopCollectionTimer()
     }
@@ -341,7 +371,60 @@ public final class CameraCapturer: NSObject {
     
     // 在deinit中也确保停止定时器
     deinit {
+        notificationObservers.forEach { NotificationCenter.default.removeObserver($0) }
+        notificationObservers.removeAll()
         stopCollectionTimer()
+    }
+}
+
+private extension CameraCapturer {
+    func setupSessionObservers() {
+        let center = NotificationCenter.default
+        
+        let interrupted = center.addObserver(
+            forName: AVCaptureSession.wasInterruptedNotification,
+            object: captureSession,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            self.logger?.logType(.capturer, message: "会话中断，暂停采集")
+            self.stopCollectionTimer()
+        }
+        
+        let interruptionEnded = center.addObserver(
+            forName: AVCaptureSession.interruptionEndedNotification,
+            object: captureSession,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            self.logger?.logType(.capturer, message: "会话中断结束，尝试恢复")
+            guard self.shouldKeepSessionRunning else { return }
+            self.startCaptureSession()
+        }
+        
+        let runtimeError = center.addObserver(
+            forName: AVCaptureSession.runtimeErrorNotification,
+            object: captureSession,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self else { return }
+            let nsError = notification.userInfo?[AVCaptureSessionErrorKey] as? NSError
+            self.logger?.logType(.capturer, message: "会话运行错误: \(nsError?.localizedDescription ?? "unknown")")
+            guard self.shouldKeepSessionRunning else { return }
+            self.startCaptureSession()
+        }
+        
+        let becameActive = center.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            guard self.shouldKeepSessionRunning else { return }
+            self.startCaptureSession()
+        }
+        
+        notificationObservers.append(contentsOf: [interrupted, interruptionEnded, runtimeError, becameActive])
     }
 }
 
