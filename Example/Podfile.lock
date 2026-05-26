@@ -1,9 +1,9 @@
 PODS:
-  - DHPaddleLiteSDK (1.0.0):
-    - DHPaddleLiteSDK/Core (= 1.0.0)
-  - DHPaddleLiteSDK/Core (1.0.0):
+  - DHPaddleLiteSDK (2.0.0):
+    - DHPaddleLiteSDK/Core (= 2.0.0)
+  - DHPaddleLiteSDK/Core (2.0.0):
     - PaddleLiteiOS (~> 0.0.5)
-  - DHPaddleLiteSDK/OCRModelV4 (1.0.0):
+  - DHPaddleLiteSDK/OCRModelV4 (2.0.0):
     - DHPaddleLiteSDK/Core
   - GoogleDataTransport (9.4.1):
     - GoogleUtilities/Environment (~> 7.7)
@@ -73,15 +73,15 @@ PODS:
   - nanopb/encode (2.30910.0)
   - PaddleLiteiOS (0.0.5)
   - PromisesObjC (2.4.0)
-  - SmartScanner/Apple (1.0.0):
+  - SmartScanner/Apple (1.1.0):
     - SmartScanner/Core
-  - SmartScanner/Core (1.0.0)
-  - SmartScanner/Google (1.0.0):
+  - SmartScanner/Core (1.1.0)
+  - SmartScanner/Google (1.1.0):
     - GoogleMLKit/BarcodeScanning
     - GoogleMLKit/TextRecognition
     - GoogleMLKit/TextRecognitionChinese
     - SmartScanner/Core
-  - SmartScanner/Paddle (1.0.0):
+  - SmartScanner/Paddle (1.1.0):
     - DHPaddleLiteSDK
     - SmartScanner/Core
   - SwiftCheck (0.12.0)
@@ -124,14 +124,14 @@ EXTERNAL SOURCES:
 
 CHECKOUT OPTIONS:
   DHPaddleLiteSDK:
-    :commit: 9c8c2fbd1fb225647d7bf4fd9114b81f62385fc7
+    :commit: 6699600631e767bd27d24f12486c46b408d41e40
     :git: https://github.com/duanbhu/DHPaddleLiteSDK.git
   PaddleLiteiOS:
     :git: https://github.com/duanbhu/PaddleLiteiOS.git
     :tag: 0.0.5
 
 SPEC CHECKSUMS:
-  DHPaddleLiteSDK: bca235140e8fb1eb0380c96564d4ceb1d904c1c6
+  DHPaddleLiteSDK: 95c6586ea09956db0c49ae081af38a1c58011985
   GoogleDataTransport: 6c09b596d841063d76d4288cc2d2f42cc36e1e2a
   GoogleMLKit: 97ac7af399057e99182ee8edfa8249e3226a4065
   GoogleToolboxForMac: d1a2cbf009c453f4d6ded37c105e2f67a32206d8
@@ -148,9 +148,9 @@ SPEC CHECKSUMS:
   nanopb: 438bc412db1928dac798aa6fd75726007be04262
   PaddleLiteiOS: 772f9bf2974f8b34894b996b391a5249b0d1e2c4
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  SmartScanner: 7e179e3e393776b24abd744ca5c87bcf9d94fe10
+  SmartScanner: b3f544bce81c8a1ed4a3958b203d723a090328b7
   SwiftCheck: d1dd04d955cc76620b0f84e087536bd059a11c24
 
-PODFILE CHECKSUM: 1c84444e1205c004a5a38601ca3e74d7bca0e9d5
+PODFILE CHECKSUM: 678e99b88ed2d7c968ca0236ed78527d014ffb88
 
 COCOAPODS: 1.16.2

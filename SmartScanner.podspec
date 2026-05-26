@@ -9,7 +9,7 @@
 Pod::Spec.new do |s|
   s.name             = 'SmartScanner'
   s.module_name      = 'SmartScanner'
-  s.version          = '1.0.2'
+  s.version          = '1.1.0'
   s.summary          = '相机采集视频流、谷歌MLKit识别手机号、条形码'
 
 # This description is used to generate tags and improve search results.
