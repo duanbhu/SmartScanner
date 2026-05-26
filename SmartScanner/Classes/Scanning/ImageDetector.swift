@@ -24,8 +24,15 @@ public protocol DetecteEngineProtocol {
     
     func reset(detecteOptions: DetecteOptions)
     
+    /// 释放引擎内部占用的模型或缓存资源；默认实现为空。
+    func releaseResources()
+    
     /// 识别图片， 目前仅处理条码、二维码识别
     func recognize(image: UIImage, completion: (DetectResult) -> ())
+}
+
+public extension DetecteEngineProtocol {
+    func releaseResources() {}
 }
 
 public struct DetecteOptions: OptionSet {
@@ -153,6 +160,10 @@ public class ImageDetector: NSObject {
         engines.forEach {
             $0.reset(detecteOptions: detecteOptions)
         }
+    }
+    
+    public func releaseResources() {
+        engines.forEach { $0.releaseResources() }
     }
 }
 

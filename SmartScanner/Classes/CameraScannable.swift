@@ -156,6 +156,7 @@ extension CameraScanViewable {
     /// 结束扫描
     public func stopScan() {
         cameraCapturer?.stop()
+        detector.releaseResources()
     }
 }
 

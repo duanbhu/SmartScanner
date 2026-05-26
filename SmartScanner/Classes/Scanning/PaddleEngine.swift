@@ -30,6 +30,8 @@ public final class PaddleEngine: NSObject, DetecteEngineProtocol {
         self.options = detecteOptions
     }
     
+    public func releaseResources() {}
+    
     public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: @escaping Handler) {
         handle(nil)
     }
@@ -94,6 +96,12 @@ public final class PaddleEngine: NSObject, DetecteEngineProtocol {
     
     public func reset(detecteOptions: DetecteOptions) {
         self.options = detecteOptions
+    }
+    
+    public func releaseResources() {
+#if canImport(DHPaddleLiteSDK)
+        DHPaddleLiteTextRecognition.sharedInstance().releaseResources()
+#endif
     }
     
     public func recognize(sampleBuffer: CMSampleBuffer, regionRect: CGRect, handle: @escaping Handler) {

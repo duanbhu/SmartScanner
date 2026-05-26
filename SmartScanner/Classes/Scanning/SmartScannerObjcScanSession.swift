@@ -50,6 +50,7 @@ public final class SmartScannerObjcScanSession: NSObject {
 
     public func stop() {
         cameraCapturer.stop()
+        detector.releaseResources()
     }
 
     @objc(setTorchOpen:)
