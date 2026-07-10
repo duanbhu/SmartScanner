@@ -12,6 +12,7 @@
 #if canImport(UIKit)
 import UIKit
 import AVFoundation
+import ImageIO
 
 public extension CameraCapturer {
     enum CameraCapturerError: Error {
@@ -338,26 +339,32 @@ public final class CameraCapturer: NSObject {
     }
     
     private var takePhotoCompletion: ((UIImage) -> ())?
-    
+
+    /// 拍照失败回调（无法产出可渲染图片时触发），避免业务侧静默卡死
+    private var takePhotoFailure: (() -> ())?
+
     /// 标识是否正在拍照
     private var isTakingPhoto = false
-    
+
     /// 拍照时，是否播放声音
     private var isSound = true
-    
+
     /// 拍照
     /// - Parameters:
     ///   - isSound: 是否发出声音：咔嚓 默认是false
-    ///   - completion: 图片回调
-    public func takePhoto(isSound: Bool = false, completion: ((UIImage) -> ())?) {
+    ///   - completion: 图片回调（保证回调的图片已完成解码、可直接渲染）
+    ///   - onFailure: 失败回调：采集失败或照片数据无法解码时触发（正在拍照被忽略时不触发）
+    public func takePhoto(isSound: Bool = false, completion: ((UIImage) -> ())?, onFailure: (() -> ())? = nil) {
         guard let connection = photoOutput.connection(with: .video), connection.isEnabled, connection.isActive else {
             logger?.logType(.photoOutput, message: "拍照采集失败")
+            onFailure?()
             return
         }
         guard !isTakingPhoto else { return }
         isTakingPhoto = true
         self.isSound = isSound
         takePhotoCompletion = completion
+        takePhotoFailure = onFailure
         let photoSettings = AVCapturePhotoSettings()
         photoSettings.isHighResolutionPhotoEnabled = true
         photoSettings.isAutoStillImageStabilizationEnabled = true
@@ -445,14 +452,81 @@ extension CameraCapturer: AVCapturePhotoCaptureDelegate {
         isTakingPhoto = false
         guard error == nil else {
             logger?.logType(.photoOutput, message: "\(error!)")
+            finishTakePhoto(with: nil)
             return
         }
-        
-        guard let imageData = photo.fileDataRepresentation(), let image = UIImage(data: imageData) else {
-            logger?.logType(.photoOutput, message: "处理照片时出错")
+
+        // 历史问题：UIImage(data:) 产出的是懒解码图，高分辨率照片在内存紧张时
+        // 首次渲染可能静默失败，业务侧表现为确认页空白、加水印后整图全黑。
+        // 这里改为拍照后立即解码并限制最大边长，保证回调出去的图片一定可渲染；
+        // 全部解码手段失败时走失败回调，而不是把坏图交给业务。
+        if let imageData = photo.fileDataRepresentation(),
+           let image = CameraCapturer.decodedImage(from: imageData) {
+            finishTakePhoto(with: image)
             return
         }
-        takePhotoCompletion?(image)
+
+        // 兜底：直接取采集缓冲区的 CGImage（无需再走 JPEG 解码），按元数据还原方向
+        if let cgImage = photo.cgImageRepresentation() {
+            logger?.logType(.photoOutput, message: "照片数据解码失败，使用 cgImageRepresentation 兜底")
+            let orientation = CameraCapturer.imageOrientation(fromPhotoMetadata: photo.metadata)
+            finishTakePhoto(with: UIImage(cgImage: cgImage, scale: 1, orientation: orientation))
+            return
+        }
+
+        logger?.logType(.photoOutput, message: "处理照片时出错：无法解码拍照数据")
+        finishTakePhoto(with: nil)
+    }
+
+    /// 统一收口拍照结果：成功回调图片，失败回调 onFailure，并清理一次性回调
+    private func finishTakePhoto(with image: UIImage?) {
+        let completion = takePhotoCompletion
+        let failure = takePhotoFailure
+        takePhotoCompletion = nil
+        takePhotoFailure = nil
+        if let image = image {
+            completion?(image)
+        } else {
+            failure?()
+        }
+    }
+
+    /// 立即解码照片数据并限制最大边长，返回已解码位图；失败返回 nil。
+    /// - 下游展示与上传（压缩目标宽度约 1242px）都不需要原始 12MP 大图，
+    ///   提前限制尺寸能显著降低解码内存峰值，也避免后续懒解码失败。
+    /// - kCGImageSourceCreateThumbnailWithTransform 会同时应用 EXIF 方向，产出 .up 方向图片。
+    private static func decodedImage(from data: Data, maxPixelSize: CGFloat = 2048) -> UIImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary),
+              cgImage.width > 0, cgImage.height > 0 else {
+            return nil
+        }
+        return UIImage(cgImage: cgImage)
+    }
+
+    /// 从拍照元数据中读取 EXIF 方向并转换为 UIImage.Orientation
+    private static func imageOrientation(fromPhotoMetadata metadata: [String: Any]) -> UIImage.Orientation {
+        guard let raw = (metadata[kCGImagePropertyOrientation as String] as? NSNumber)?.uint32Value,
+              let cgOrientation = CGImagePropertyOrientation(rawValue: raw) else {
+            return .up
+        }
+        switch cgOrientation {
+        case .up: return .up
+        case .upMirrored: return .upMirrored
+        case .down: return .down
+        case .downMirrored: return .downMirrored
+        case .left: return .left
+        case .leftMirrored: return .leftMirrored
+        case .right: return .right
+        case .rightMirrored: return .rightMirrored
+        @unknown default: return .up
+        }
     }
     
     public func photoOutput(_ output: AVCapturePhotoOutput, willCapturePhotoFor resolvedSettings: AVCaptureResolvedPhotoSettings) {

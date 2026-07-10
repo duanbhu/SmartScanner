@@ -73,15 +73,15 @@ PODS:
   - nanopb/encode (2.30910.0)
   - PaddleLiteiOS (0.0.5)
   - PromisesObjC (2.4.0)
-  - SmartScanner/Apple (1.2.0):
+  - SmartScanner/Apple (1.2.1):
     - SmartScanner/Core
-  - SmartScanner/Core (1.2.0)
-  - SmartScanner/Google (1.2.0):
+  - SmartScanner/Core (1.2.1)
+  - SmartScanner/Google (1.2.1):
     - GoogleMLKit/BarcodeScanning
     - GoogleMLKit/TextRecognition
     - GoogleMLKit/TextRecognitionChinese
     - SmartScanner/Core
-  - SmartScanner/Paddle (1.2.0):
+  - SmartScanner/Paddle (1.2.1):
     - DHPaddleLiteSDK
     - SmartScanner/Core
   - SwiftCheck (0.12.0)
