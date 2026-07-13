@@ -156,8 +156,11 @@ extension GoogleEngineUpgrade {
     private func scanBarcodes(in visionImage: VisionImage) -> [Barcode] {
         var barcodes: [Barcode] = []
         do {
-            barcodes = try BarcodeScanner.barcodeScanner(options: BarcodeScannerOptions(formats: .all))
-                .results(in: visionImage)
+            // 与 GoogleEngine 共用全局串行队列，防止多采集队列并发触发 MLKit 内部断言崩溃
+            barcodes = try GoogleEngine.mlkitRecognitionQueue.sync {
+                try BarcodeScanner.barcodeScanner(options: BarcodeScannerOptions(formats: .all))
+                    .results(in: visionImage)
+            }
         } catch let error {
             DetectorConfig.logPrint("Failed to scan barcodes with error: \(error.localizedDescription).")
         }
@@ -206,7 +209,10 @@ extension GoogleEngineUpgrade {
         var recognizedText: Text?
         do {
             image.orientation = .up
-            recognizedText = try textRecognizer.results(in: image)
+            // 与 GoogleEngine 共用全局串行队列，防止多采集队列并发触发 MLKit 内部断言崩溃
+            recognizedText = try GoogleEngine.mlkitRecognitionQueue.sync {
+                try textRecognizer.results(in: image)
+            }
         } catch let error {
             DetectorConfig.logPrint("Failed to recognize text with error: \(error.localizedDescription).")
             if let nsError = error as NSError? {

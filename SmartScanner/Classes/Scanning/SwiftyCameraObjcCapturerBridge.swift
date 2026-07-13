@@ -55,4 +55,13 @@ public final class SmartScannerObjcCapturerBridge: NSObject {
     public func takePhoto(withSound isSound: Bool, completion: ((UIImage) -> Void)?) {
         cameraCapturer.takePhoto(isSound: isSound, completion: completion)
     }
+
+    /// 带失败回调的拍照：采集失败、在途请求过多、照片解码失败或会话异常时触发 failure。
+    /// 旧的两参数版本在失败时 completion 静默不回调，建议新接入方使用本方法。
+    @objc(takePhotoWithSound:completion:failure:)
+    public func takePhoto(withSound isSound: Bool,
+                          completion: ((UIImage) -> Void)?,
+                          failure: (() -> Void)?) {
+        cameraCapturer.takePhoto(isSound: isSound, completion: completion, onFailure: failure)
+    }
 }

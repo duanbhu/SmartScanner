@@ -73,6 +73,15 @@ public final class SmartScannerObjcScanSession: NSObject {
         cameraCapturer.takePhoto(isSound: isSound, completion: completion)
     }
 
+    /// 带失败回调的拍照：采集失败、在途请求过多、照片解码失败或会话异常时触发 failure。
+    /// 旧的两参数版本在失败时 completion 静默不回调，建议新接入方使用本方法。
+    @objc(takePhotoWithSound:completion:failure:)
+    public func takePhoto(withSound isSound: Bool,
+                          completion: ((UIImage) -> Void)?,
+                          failure: (() -> Void)?) {
+        cameraCapturer.takePhoto(isSound: isSound, completion: completion, onFailure: failure)
+    }
+
     private func bindRecognizer() {
         cameraCapturer.outputSampleBuffer { [weak self] buffer, regionRect in
             guard let self = self else { return }
@@ -90,10 +99,13 @@ public final class SmartScannerObjcScanSession: NSObject {
             return
         }
 
-        cameraCapturer.takePhoto { [weak self] image in
+        cameraCapturer.takePhoto(completion: { [weak self] image in
             detectResult.picture = image
             self?.notify(detectResult)
-        }
+        }, onFailure: { [weak self] in
+            // 拍照失败时识别结果不能被吞掉：无图也要把结果给出去，由业务决定如何兜底
+            self?.notify(detectResult)
+        })
     }
 
     private func notify(_ detectResult: DetectResult) {

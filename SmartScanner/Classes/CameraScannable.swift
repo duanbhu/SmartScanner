@@ -103,6 +103,9 @@ extension CameraScanViewable {
                 self?.cameraCapturer?.takePhoto(completion: { image in
                     detectResult.picture = image
                     completion(detectResult)
+                }, onFailure: {
+                    // 拍照失败时识别结果不能被吞掉：无图也要把结果给出去，由业务决定如何兜底
+                    completion(detectResult)
                 })
             } else {
                 completion(detectResult)
@@ -122,6 +125,9 @@ extension CameraScanViewable {
                 self?.cameraCapturer?.takePhoto(completion: { image in
                     detectResult.picture = image
                     completion(detectResult)
+                }, onFailure: {
+                    // 拍照失败时识别结果不能被吞掉：无图也要把结果给出去，由业务决定如何兜底
+                    completion(detectResult)
                 })
             } else {
                 completion(detectResult)
@@ -139,6 +145,9 @@ extension CameraScanViewable {
             if true == self?.isNeedAutoTakePhoto() {
                 self?.cameraCapturer?.takePhoto(completion: { image in
                     detectResult.picture = image
+                    completion(detectResult)
+                }, onFailure: {
+                    // 拍照失败时识别结果不能被吞掉：无图也要把结果给出去，由业务决定如何兜底
                     completion(detectResult)
                 })
             } else {

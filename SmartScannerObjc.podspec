@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name             = 'SmartScannerObjc'
   s.module_name      = 'SmartScannerObjc'
-  s.version          = '1.2.0'
+  s.version          = '1.3.0'
   s.summary          = 'Objective-C friendly wrapper for SmartScanner camera and scanning APIs'
 
   s.description      = <<-DESC

@@ -46,11 +46,19 @@ import MLKitTextRecognitionChinese
 /// 默认 Google 引擎：保持旧版实现，避免影响存量扫描业务。
 @objc(SmartScannerGoogleEngine)
 public class GoogleEngine: NSObject, DetecteEngineProtocol {
-    
+
+    /// MLKit 的 TextRecognizer/BarcodeScanner 工厂方法返回的是按 options 缓存的共享实例，
+    /// 底层 visionkit::Pipeline 要求串行、按帧序处理；多个扫描场景（如页面切换时新旧会话的
+    /// 采集队列短暂并存、悬浮窗与扫描页同时运行）从各自的 sessionQueue 并发调用 results(in:)
+    /// 会命中其内部 CHECK 断言直接 abort（线上崩溃点：visionkit::Pipeline::Process →
+    /// LogMessageFatal → abort，覆盖 1.2.4~1.3.0、iOS 16~26 全部版本）。
+    /// 因此所有引擎实例的 MLKit 同步识别调用统一收口到这条全局串行队列。
+    static let mlkitRecognitionQueue = DispatchQueue(label: "com.smartscanner.mlkit.recognition")
+
     var options: DetecteOptions
-    
+
     private var response: RecognitionResponse? = nil
-    
+
     public init(options: DetecteOptions) {
         self.options = options
     }
@@ -92,8 +100,11 @@ extension GoogleEngine {
         var barcodes: [Barcode] = []
         do {
             // This method must be called on a background thread.
-            barcodes = try BarcodeScanner.barcodeScanner(options: BarcodeScannerOptions(formats: .all))
-                .results(in: visionImage)
+            // 串行收口，防止多采集队列并发触发 MLKit 内部断言崩溃，见 mlkitRecognitionQueue 注释
+            barcodes = try GoogleEngine.mlkitRecognitionQueue.sync {
+                try BarcodeScanner.barcodeScanner(options: BarcodeScannerOptions(formats: .all))
+                    .results(in: visionImage)
+            }
         } catch let error {
             DetectorConfig.logPrint("Failed to scan barcodes with error: \(error.localizedDescription).")
         }
@@ -161,7 +172,10 @@ extension GoogleEngine {
         var recognizedText: Text?
         let textRecognizer = TextRecognizer.textRecognizer(options: ChineseTextRecognizerOptions())
         do {
-            recognizedText = try textRecognizer.results(in: image)
+            // 串行收口，防止多采集队列并发触发 MLKit 内部断言崩溃，见 mlkitRecognitionQueue 注释
+            recognizedText = try GoogleEngine.mlkitRecognitionQueue.sync {
+                try textRecognizer.results(in: image)
+            }
         } catch let error {
             DetectorConfig.logPrint("Failed to recognize text with error: \(error.localizedDescription).")
         }
