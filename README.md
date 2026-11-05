@@ -49,6 +49,16 @@ pod 'DHPaddleLiteSDK', :git => 'https://github.com/duanbhu/DHPaddleLiteSDK.git',
 pod 'SmartScanner/Paddle'
 ```
 
+本地 Example 已接入 PP-OCRv6 Tiny：使用相邻的 `PaddleALL/DHPaddleLiteSDK` 源码仓库及其新增的 `OCRModelV6Tiny` 资源包。
+SDK 尚未发布该能力，因此 Example 暂时使用 `:path` 依赖。SDK 放在其他位置时，可运行：
+
+```bash
+cd Example
+SMARTSCANNER_PADDLE_SDK_PATH=/path/to/DHPaddleLiteSDK pod install --no-repo-update
+```
+
+v6 使用专属字典、48×320 识别输入和 BGR 预处理，转换与接入说明见 [PP-OCRv6 Paddle Lite 方案](docs/ppocrv6-paddle-lite.md)。
+
 Objective-C projects can use the Objective-C friendly pod entrypoint:
 
 ```ruby

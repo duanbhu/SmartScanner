@@ -20,7 +20,8 @@ target 'SmartScanner_Example' do
   pod 'SmartScanner/Apple', :path => '../'
   # Paddle engine example:
   pod 'PaddleLiteiOS', :git => 'https://github.com/duanbhu/PaddleLiteiOS.git', :tag => '0.0.5'
-  pod 'DHPaddleLiteSDK/OCRModelV4', :git => 'https://github.com/duanbhu/DHPaddleLiteSDK.git'
+  # v6 support is in the local SDK checkout until its next release.
+  pod 'DHPaddleLiteSDK/OCRModelV6Tiny', :path => ENV.fetch('SMARTSCANNER_PADDLE_SDK_PATH', '../../PaddleALL/DHPaddleLiteSDK')
 
   pod 'SmartScanner/Paddle', :path => '../'
 
